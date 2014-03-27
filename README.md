@@ -8,7 +8,7 @@ Fluentd out\_copy extension to do tagging before passing to chained plugins
 
 ```apache
 <match **>
-  type copy
+  type tagged_copy
   <store>
     <filter>
        add_tag_prefix foo
