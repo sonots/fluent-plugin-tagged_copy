@@ -44,6 +44,14 @@ But, you can specify `filter` directive with following options
 
     Remove tag prefix for output message
     
+* add_tag_suffix
+
+    Add tag suffix for output message
+
+* remove_tag_suffix
+
+    Remove tag suffix for output message
+    
 ## Contributing
 
 1. Fork it

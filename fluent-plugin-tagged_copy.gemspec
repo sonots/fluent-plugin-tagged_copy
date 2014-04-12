@@ -3,12 +3,13 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = "fluent-plugin-tagged_copy"
-  s.version     = "0.0.1"
+  s.version     = "0.0.2"
   s.authors     = ["Naotoshi Seo"]
   s.email       = ["sonots@gmail.com"]
   s.homepage    = "https://github.com/sonots/fluent-plugin-tagged_copy"
   s.summary     = "Fluentd out_copy extension to do tagging before copy"
   s.description = s.summary
+  s.licenses    = ["MIT"]
 
   s.rubyforge_project = "fluent-plugin-tagged_copy"
 
