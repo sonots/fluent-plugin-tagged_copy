@@ -21,8 +21,13 @@ module Fluent
         log.debug "adding store type=#{type.dump}"
 
         f = e.elements.select {|i| i.name == 'filter'}.first || {}
-        tag_proc = generate_tag_proc(f['tag'], f['add_tag_prefix'], f['remove_tag_prefix'])
-        @tag_procs << tag_proc
+        @tag_procs << tag_proc(
+          f['tag'],
+          f['add_tag_prefix'],
+          f['remove_tag_prefix'],
+          f['add_tag_suffix'],
+          f['remove_tag_suffix']
+        )
 
         output = Plugin.new_output(type)
         output.configure(e)
@@ -49,24 +54,25 @@ module Fluent
 
     private
 
-    def generate_tag_proc(tag, add_tag_prefix, remove_tag_prefix)
-      tag_prefix = "#{add_tag_prefix}." if add_tag_prefix
-      tag_prefix_match = "#{remove_tag_prefix}." if remove_tag_prefix
-      if tag
-        Proc.new {|t| tag }
-      elsif tag_prefix and tag_prefix_match
-        Proc.new {|t| "#{tag_prefix}#{lstrip(t, tag_prefix_match)}" }
+    def tag_proc(tag, add_tag_prefix, remove_tag_prefix, add_tag_suffix, remove_tag_suffix)
+      rstrip = Proc.new {|str, substr| str.chomp(substr) }
+      lstrip = Proc.new {|str, substr| str.start_with?(substr) ? str[substr.size..-1] : str }
+      tag_prefix = "#{rstrip.call(add_tag_prefix, '.')}." if add_tag_prefix
+      tag_suffix = ".#{lstrip.call(add_tag_suffix, '.')}" if add_tag_suffix
+      tag_prefix_match = "#{rstrip.call(remove_tag_prefix, '.')}." if remove_tag_prefix
+      tag_suffix_match = ".#{lstrip.call(remove_tag_suffix, '.')}" if remove_tag_suffix
+      tag_fixed = tag if tag
+      if tag_fixed
+        Proc.new {|tag| tag_fixed }
+      elsif tag_prefix_match and tag_suffix_match
+        Proc.new {|tag| "#{tag_prefix}#{rstrip.call(lstrip.call(tag, tag_prefix_match), tag_suffix_match)}#{tag_suffix}" }
       elsif tag_prefix_match
-        Proc.new {|t| lstrip(t, tag_prefix_match) }
-      elsif tag_prefix
-        Proc.new {|t| "#{tag_prefix}#{t}" }
+        Proc.new {|tag| "#{tag_prefix}#{lstrip.call(tag, tag_prefix_match)}#{tag_suffix}" }
+      elsif tag_suffix_match
+        Proc.new {|tag| "#{tag_prefix}#{rstrip.call(tag, tag_suffix_match)}#{tag_suffix}" }
       else
-        Proc.new {|t| t }
+        Proc.new {|tag| "#{tag_prefix}#{tag}#{tag_suffix}" }
       end
-    end
-
-    def lstrip(string, substring)
-      string.index(substring) == 0 ? string[substring.size..-1] : string
     end
   end 
 

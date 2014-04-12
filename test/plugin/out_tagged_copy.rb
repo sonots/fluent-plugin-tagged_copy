@@ -278,4 +278,78 @@ class TaggedCopyOutputTest < Test::Unit::TestCase
       ['test', time, {"a"=>2}],
     ], second.emits
   end
+
+  def test_add_tag_suffix_emit
+    config = %[
+      <store>
+        <filter>
+          add_tag_suffix first
+        </filter>
+        type test
+        name c0
+      </store>
+      <store>
+        <filter>
+          add_tag_suffix second
+        </filter>
+        type test
+        name c0
+      </store>
+    ]
+    d = create_driver(config)
+
+    time = Time.parse("2011-01-02 13:14:15 UTC").to_i
+    d.emit({"a"=>1}, time)
+    d.emit({"a"=>2}, time)
+
+    first = d.instance.outputs.first
+    assert_equal [
+      ['test.first', time, {"a"=>1}],
+      ['test.first', time, {"a"=>2}],
+    ], first.emits
+
+    second = d.instance.outputs[1]
+    assert_equal [
+      ['test.second', time, {"a"=>1}],
+      ['test.second', time, {"a"=>2}],
+    ], second.emits
+  end
+
+  def test_remove_tag_suffix_emit
+    config = %[
+      <store>
+        <filter>
+          remove_tag_suffix first
+        </filter>
+        type test
+        name c0
+      </store>
+      <store>
+        <filter>
+          remove_tag_suffix second
+        </filter>
+        type test
+        name c0
+      </store>
+    ]
+    d = create_driver(config)
+
+    time = Time.parse("2011-01-02 13:14:15 UTC").to_i
+    d.tag = 'test.first'
+    d.emit({"a"=>1}, time)
+    d.tag = 'test.second'
+    d.emit({"a"=>2}, time)
+
+    first = d.instance.outputs.first
+    assert_equal [
+      ['test', time, {"a"=>1}],
+      ['test.second', time, {"a"=>2}],
+    ], first.emits
+
+    second = d.instance.outputs[1]
+    assert_equal [
+      ['test.first', time, {"a"=>1}],
+      ['test', time, {"a"=>2}],
+    ], second.emits
+  end
 end
